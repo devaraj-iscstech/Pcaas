@@ -1,48 +1,93 @@
 'use client';
 
-import React from 'react';
-import { useAuth } from './AuthProvider';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { authService } from '@/services/oauthService';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: string[];
+  requiredRole?: 'candidate' | 'employer' | 'admin';
+  redirectTo?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  allowedRoles = ['candidate', 'employer_admin', 'employer_recruiter', 'super_admin'] 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredRole,
+  redirectTo = '/auth/login',
 }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    } else if (user && allowedRoles && !allowedRoles.includes(user.role)) {
-      // Redirect to unauthorized page if user doesn't have required role
-      router.push('/unauthorized');
-    }
-  }, [isAuthenticated, isLoading, user, router, allowedRoles]);
+    const checkAuth = async () => {
+      try {
+        // Check if user is authenticated
+        const isAuthenticated = authService.isAuthenticated();
 
+        if (!isAuthenticated) {
+          // Not authenticated, redirect to login
+          router.push(redirectTo);
+          return;
+        }
+
+        // Check token expiry and refresh if needed
+        if (authService.isTokenExpired()) {
+          try {
+            await authService.refreshAccessToken();
+          } catch (error) {
+            // Token refresh failed, redirect to login
+            router.push(redirectTo);
+            return;
+          }
+        }
+
+        // Check role if required
+        if (requiredRole) {
+          const user = authService.getCurrentUser();
+          if (!user || user.role !== requiredRole) {
+            // Wrong role, redirect to appropriate page
+            if (user?.role === 'candidate') {
+              router.push('/candidate');
+            } else if (user?.role === 'employer') {
+              router.push('/employer');
+            } else {
+              router.push(redirectTo);
+            }
+            return;
+          }
+        }
+
+        // All checks passed
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.push(redirectTo);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [requiredRole, redirectTo, router]);
+
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-t-transparent border-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Verifying authentication...</p>
+        </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // The redirect happens in useEffect
+  // Show content if authorized
+  if (isAuthorized) {
+    return <>{children}</>;
   }
 
-  if (user && allowedRoles && !allowedRoles.includes(user.role)) {
-    return null; // The redirect happens in useEffect
-  }
-
-  return <>{children}</>;
+  // Return null while redirecting
+  return null;
 };
-
-export default ProtectedRoute;

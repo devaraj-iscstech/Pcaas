@@ -49,24 +49,24 @@ export const HeroSection: React.FC = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <a href="/candidate">
+            <a href="/auth/register">
               <Button
                 variant="primary"
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg shadow-2xl shadow-blue-500/50 transform hover:scale-105 transition-all"
               >
                 <TargetIcon size={24} className="mr-2" />
-                I'm a Candidate
+                Explore as Candidate
               </Button>
             </a>
-            <a href="/employer">
+            <a href="/auth/register">
               <Button
                 variant="outline"
                 size="lg"
                 className="border-2 border-white/30 text-white backdrop-blur-sm hover:bg-white/10 px-8 py-4 text-lg transform hover:scale-105 transition-all"
               >
                 <UsersIcon size={24} className="mr-2" />
-                I'm an Employer
+                Explore as Employer
               </Button>
             </a>
           </div>

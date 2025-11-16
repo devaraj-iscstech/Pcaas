@@ -19,12 +19,21 @@ import { SkillGapAnalyzer } from '@/components/candidate/SkillGapAnalyzer';
 import { LearningRoadmap } from '@/components/candidate/LearningRoadmap';
 import { MarketBenchmark } from '@/components/candidate/MarketBenchmark';
 import { ProgressTracker } from '@/components/candidate/ProgressTracker';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { authService } from '@/services/oauthService';
+import { useRouter } from 'next/navigation';
 
 type ViewType = 'dashboard' | 'onboarding' | 'career' | 'skills' | 'learning' | 'market' | 'progress';
 
-export default function CandidateDashboard() {
+function CandidateDashboardContent() {
+  const router = useRouter();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isOnboarded, setIsOnboarded] = useState(false);
+
+  const handleLogout = async () => {
+    await authService.logout();
+    router.push('/auth/login');
+  };
 
   const handleOnboardingComplete = (data: any) => {
     console.log('Onboarding data:', data);
@@ -66,9 +75,12 @@ export default function CandidateDashboard() {
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="success">Career Health: 78</Badge>
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                JD
+              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold cursor-pointer" title="Profile">
+                {authService.getCurrentUser()?.name.charAt(0).toUpperCase() || 'U'}
               </div>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
             </div>
           </div>
         </div>
@@ -199,5 +211,13 @@ export default function CandidateDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CandidateDashboard() {
+  return (
+    <ProtectedRoute requiredRole="candidate">
+      <CandidateDashboardContent />
+    </ProtectedRoute>
   );
 }

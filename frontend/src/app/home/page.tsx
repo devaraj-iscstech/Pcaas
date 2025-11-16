@@ -43,16 +43,16 @@ export default function HomePage() {
             {/* CTA Buttons */}
             <div className="flex items-center gap-4">
               <a
-                href="/login"
+                href="/auth/login"
                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium hidden sm:block"
               >
                 Sign In
               </a>
               <a
-                href="/candidate"
+                href="/auth/register"
                 className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-shadow"
               >
-                Get Started
+                Explore App
               </a>
             </div>
           </div>

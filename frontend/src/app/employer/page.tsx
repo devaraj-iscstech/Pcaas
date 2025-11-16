@@ -18,11 +18,21 @@ import { EmployeeProfile } from '@/components/employer/EmployeeProfile';
 import { CareerSimulator } from '@/components/employer/CareerSimulator';
 import { WorkforceForecast } from '@/components/employer/WorkforceForecast';
 import { DEIMobilityTracker } from '@/components/employer/DEIMobilityTracker';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { authService } from '@/services/oauthService';
+import { useRouter } from 'next/navigation';
 
 type ViewType = 'dashboard' | 'heatmap' | 'profile' | 'simulator' | 'forecast' | 'dei';
 
-export default function EmployerDashboard() {
+function EmployerDashboardContent() {
+  const router = useRouter();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  const user = authService.getCurrentUser();
+
+  const handleLogout = async () => {
+    await authService.logout();
+    router.push('/auth/login');
+  };
 
   // Navigation items
   const navItems = [
@@ -82,8 +92,11 @@ export default function EmployerDashboard() {
             <div className="flex items-center gap-3">
               <Badge variant="info">2,500 Employees</Badge>
               <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
-                TG
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'E'}
               </div>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
             </div>
           </div>
         </div>
@@ -293,5 +306,13 @@ export default function EmployerDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmployerDashboard() {
+  return (
+    <ProtectedRoute requiredRole="employer">
+      <EmployerDashboardContent />
+    </ProtectedRoute>
   );
 }
